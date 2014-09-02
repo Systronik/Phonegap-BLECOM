@@ -11,7 +11,7 @@ import org.json.JSONObject;
 
 import android.util.Log;
 
-public class TCPServer extends CordovaPlugin {
+public class BLECommunication extends CordovaPlugin {
 
   private static final String TAG = "BLECOM";
   private static final String ACTION_SCAN = "scanDevices";
