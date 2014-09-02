@@ -1,9 +1,13 @@
 var blecommunication = {
-    scanDevices: function(successCallback, errorCallback) {
-        cordova.exec(successCallback, errorCallback, "BLECommunication", "scanDevices");
+    scanDevices: function(data, successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "BLECommunication", "scanDevices", [{
+        	"data": data
+        }]);
     },
-    stopScanDevices: function(successCallback, errorCallback) {
-        cordova.exec(successCallback, errorCallback, "BLECommunication", "stopScanDevices");
+    stopScanDevices: function(data, successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "BLECommunication", "stopScanDevices", [{
+        	"data": data
+        }]);
     },
     connectDevice: function(address, successCallback, errorCallback) {
         cordova.exec(successCallback, errorCallback, "BLECommunication", "connectDevice" , [{
