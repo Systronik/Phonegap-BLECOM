@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+           id="org.systronik.blecommunication"
+      version="0.0.1">
+    <name>BLECommunication</name>
+    <description>PhoneGap BLE Communication plugin</description>
+    <license>MIT</license>
+    <keywords>phonegap,ble,communication</keywords>
+
+
+    <js-module src="www/blecommunication.js" name="BLECommunication">
+        <clobbers target="window.blecommunication" />
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="BLECommunication">
+                <param name="android-package" value="org.systronik.blecommunication.BLECommunication"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/BLECommunication.java" target-dir="src/org/systronik/blecommunication" />      
+     </platform>          
+</plugin>
+
