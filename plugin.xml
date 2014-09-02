@@ -20,6 +20,11 @@
                 <param name="android-package" value="org.systronik.blecommunication.BLECommunication"/>
             </feature>
         </config-file>
+        
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.BLUETOOTH" />
+            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+        </config-file>
 
         <source-file src="src/android/BLECommunication.java" target-dir="src/org/systronik/blecommunication" />      
      </platform>          
