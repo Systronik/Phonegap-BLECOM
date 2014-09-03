@@ -28,11 +28,6 @@ var blecommunication = {
         cordova.exec(successCallback, errorCallback, "BLECommunication", "sendData", [{
         	"data": data
         }]);
-    },
-    getData: function(data, successCallback, errorCallback) {
-        cordova.exec(successCallback, errorCallback, "BLECommunication", "getData", [{
-        	"data": data
-        }]);
     }
 };
 module.exports = blecommunication;
