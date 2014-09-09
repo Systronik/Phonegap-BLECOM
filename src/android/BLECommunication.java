@@ -64,7 +64,6 @@ public class BLECommunication extends CordovaPlugin {
 	public void onDestroy() {
 		Log.d(TAG, "Application Destroyed");
 		if (_bluetoothAdapter != null){
-			doDisconnect();
 			_bluetoothAdapter.stopLeScan(mLeScanCallback);  
 		}
 		super.onDestroy();
