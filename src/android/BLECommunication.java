@@ -50,8 +50,11 @@ public class BLECommunication extends CordovaPlugin {
   private Brsp _brsp;
   private BluetoothDevice _selectedDevice;
   
+  private boolean systemPaused = false;
+  
   @Override
 	public void onPause(boolean multitasking) {
+	  systemPaused = true;
 	  Log.d(TAG, "Application Pause");
 	  if (_bluetoothAdapter != null){
 		  _bluetoothAdapter.stopLeScan(mLeScanCallback);  
@@ -59,12 +62,20 @@ public class BLECommunication extends CordovaPlugin {
 	  
 	  super.onPause(multitasking);
 	}
+  
+  @Override
+	public void onResume(boolean multitasking) {
+	  systemPaused = false;
+	  Log.d(TAG, "Application Resumed");
+	  super.onResume(multitasking);
+	}
 	
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "Application Destroyed");
 		if (_bluetoothAdapter != null){
-			_bluetoothAdapter.stopLeScan(mLeScanCallback);  
+			doDisconnect();
+			_bluetoothAdapter.stopLeScan(mLeScanCallback);
 		}
 		super.onDestroy();
 	}
@@ -134,10 +145,12 @@ public class BLECommunication extends CordovaPlugin {
   
 		}
 		else if (ACTION_SENDDATA.equals(action)) {
-			JSONObject arg_object = args.getJSONObject(0);
-			String data = arg_object.getString("data");
-			dataAvailableCallback = callbackContext;
-			sendData(data);
+			if (!systemPaused){
+				JSONObject arg_object = args.getJSONObject(0);
+				String data = arg_object.getString("data");
+				dataAvailableCallback = callbackContext;
+				sendData(data);
+			}
 			return true;
 		}
 		else {
@@ -268,9 +281,14 @@ public class BLECommunication extends CordovaPlugin {
 	
   private void doDisconnect() {
 	Log.d(TAG, "Atempting to disconnect");
-	if (_brsp.getConnectionState() != BluetoothGatt.STATE_DISCONNECTED)
-	    _brsp.disconnect();
+	if (_brsp != null){
+		if (_brsp.getConnectionState() != BluetoothGatt.STATE_DISCONNECTED){
+			 _brsp.disconnect();
+		}
+		   
 	}
+}
+	
   private void sendData(String data){
 	  if (_bluetoothAdapter != null && data != null && _brsp.getConnectionState() == BluetoothGatt.STATE_CONNECTED) {
 		  _brsp.writeBytes(data.getBytes());    
