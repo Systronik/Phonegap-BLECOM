@@ -12,7 +12,9 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 
 import com.blueradios.Brsp;
 import com.blueradios.BrspCallback;
@@ -39,7 +41,7 @@ public class BLECommunication extends CordovaPlugin {
   private static final String ACTION_DISCONNECT = "disconnectDevice"; 
   private static final String ACTION_SENDDATA = "sendData";
 
-  
+  private BluetoothAdapter.LeScanCallback mLeScanCallback;
   
   private BluetoothAdapter _bluetoothAdapter;
   
@@ -85,22 +87,47 @@ public class BLECommunication extends CordovaPlugin {
     try {
 		if (ACTION_CHECKAVAILABILITY.equals(action)) {
 		  	Log.d(TAG, "Init and check BLE");
-		  	_bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		  	if (!_bluetoothAdapter.isEnabled()) {
-		  		Log.d(TAG, "Adapter disabled");
-		  		callbackContext.success("BLE disabled");
-	//        	         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-	//        	         this.cordova.getActivity().startActivityForResult(turnOn, 0);
-	//        	         Toast.makeText(this.cordova.getActivity().getApplicationContext(),"Turned on" 
-	//        	         ,Toast.LENGTH_LONG).show();
-		      }
-		      else{
-		    	 Log.d(TAG, "Adapter enabled");
-		    	 callbackContext.success("BLE enabled");
-	//        	         Toast.makeText(getApplicationContext(),"Already on",
-	//        	         Toast.LENGTH_LONG).show();
-		      }
-	    	  return true;
+		  	
+//		  	if (!bluetoothAdapter.isEnabled()){
+//            	Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//    	  		this.cordova.getActivity().startActivityForResult(enableBtIntent, 0);
+//            } 
+		  	
+		  	PackageManager pm = cordova.getActivity().getPackageManager();
+		  	if(pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)){
+		  		mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+		  			@Override
+		  			public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
+		  				String deviceInfo = device.getAddress() + ";" + device.getName();
+		  				PluginResult result = new PluginResult(PluginResult.Status.OK, deviceInfo);
+		  		        result.setKeepCallback(true);
+		  		        deviceFoundCallback.sendPluginResult(result);
+		  			    Log.d(TAG, "Device found: " + deviceInfo);    
+		  			};
+		  		};
+		  		_bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		  		if (!_bluetoothAdapter.isEnabled()) {
+			  		callbackContext.success("BLE disabled");
+//	        	         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//	        	         this.cordova.getActivity().startActivityForResult(turnOn, 0);
+//	        	         Toast.makeText(this.cordova.getActivity().getApplicationContext(),"Turned on" 
+//	        	         ,Toast.LENGTH_LONG).show();			  		
+			  		
+			      }
+			      else{
+			    	 Log.d(TAG, "Adapter enabled");
+			    	 callbackContext.success("BLE enabled");
+		//        	         Toast.makeText(getApplicationContext(),"Already on",
+		//        	         Toast.LENGTH_LONG).show();
+			      }
+		    	  return true;
+		  	}
+		  	else{
+		  		_bluetoothAdapter = null;
+		  		callbackContext.success("BLE not supported");
+		  		return true;
+		  	}
+		  	
 	    }
 		else if (ACTION_SCAN.equals(action)) {
     	  	Log.d(TAG, "Scanning for devices ");
@@ -244,17 +271,6 @@ public class BLECommunication extends CordovaPlugin {
     result.setKeepCallback(true);
     deviceFoundCallback.sendPluginResult(result);
   }
-		
-  private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-	@Override
-	public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
-		String deviceInfo = device.getAddress() + ";" + device.getName();
-		PluginResult result = new PluginResult(PluginResult.Status.OK, deviceInfo);
-        result.setKeepCallback(true);
-        deviceFoundCallback.sendPluginResult(result);
-	    Log.d(TAG, "Device found: " + deviceInfo);    
-	};
-  };
 	
   private void doConnect(String address) {
 	_brsp = new Brsp(_brspCallback, 10000, 10000);

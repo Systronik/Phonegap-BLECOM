@@ -2,7 +2,7 @@
 
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
            id="org.systronik.blecommunication"
-      version="0.1.0">
+      version="0.1.1">
     <name>BLECommunication</name>
     <description>PhoneGap BLE Communication plugin</description>
     <license>MIT</license>
