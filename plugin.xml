@@ -2,7 +2,7 @@
 
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
            id="org.systronik.blecommunication"
-      version="0.1.1">
+      version="0.1.0">
     <name>BLECommunication</name>
     <description>PhoneGap BLE Communication plugin</description>
     <license>MIT</license>
@@ -24,9 +24,25 @@
         <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-permission android:name="android.permission.BLUETOOTH" />
             <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+            <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="19" /> 
         </config-file>
 
         <source-file src="src/android/BLECommunication.java" target-dir="src/org/systronik/blecommunication" />      
-     </platform>          
+     </platform>  
+     <platform name="ios">
+
+        <config-file target="config.xml" parent="/widget">
+            <feature name="BLECommunication">
+                <param name="ios-package" value="BLECommunication" onload="true"/>
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/BLECommunication.h" target-dir="BLECommunication" />
+        <source-file src="src/ios/BLECommunication.m" target-dir="BLECommunication" />
+        <!-- frameworks -->
+        <framework src="CoreBluetooth.framework" />
+
+    </platform>
+                     
 </plugin>
 
