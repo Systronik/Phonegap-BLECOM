@@ -43,8 +43,6 @@
 - (void)scanDevices:(CDVInvokedUrlCommand*)command {
     
     NSLog(@"scanDevices");
-    
-    
     CDVPluginResult *pluginResult = nil;
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:TRUE];
@@ -61,10 +59,12 @@
     
     NSLog(@"stopScanDevices");
     
-    CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.cBCM stopScan];
+    
+    CDVPluginResult *pluginResult = nil;
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Scanning stopped"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    scanCallback = nil;
 }
 
 - (void)connectDevice:(CDVInvokedUrlCommand*)command {
@@ -91,9 +91,10 @@
         self.brspObject.delegate = self;
         //Use CBCentral Manager to connect this peripheral
         [self.cBCM connectPeripheral:activePeripheral options:nil];
-        
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        connectionCallback = [command.callbackId copy];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+        [pluginResult setKeepCallbackAsBool:TRUE];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
     }
     else{
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
@@ -111,37 +112,51 @@
         //Use CBCentralManager to close the connection to this peripheral
         [self.cBCM cancelPeripheralConnection:activePeripheral];
         activePeripheral = nil;
-        
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        connectionCallback = [command.callbackId copy];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
     }
     else{
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
     }
+    [pluginResult setKeepCallbackAsBool:TRUE];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)sendData:(CDVInvokedUrlCommand*)command {
     
     NSLog(@"sendData");
+    NSString *arg1 = [command.arguments objectAtIndex:0];
     
+    NSString *data = [arg1 valueForKey:@"data"];
+    NSError *writeError = [self.brspObject writeString:data];
+    if (writeError){
+        NSLog(@"%@", writeError.description);
+    }
     dataCallback = [command.callbackId copy];
     CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+    [pluginResult setKeepCallbackAsBool:TRUE];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:dataCallback];
 }
 
 #pragma mark BrspDelegate
 - (void)brsp:(Brsp*)brsp OpenStatusChanged:(BOOL)isOpen {
     NSLog(@"OpenStatusChanged == %d", isOpen);
+    CDVPluginResult *pluginResult = nil;
+    NSString *connectionStatus = nil;
     if (isOpen) {
+        connectionStatus = @"Connected";
         //The BRSP object is ready to be used
         [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         //Print the security level of the brsp service to console
         NSLog(@"BRSP Security Level is %d", _brspObject.securityLevel);
     } else {
         //brsp object has been closed
+        connectionStatus = @"Disconnected";
     }
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:connectionStatus];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
 }
 - (void)brsp:(Brsp*)brsp SendingStatusChanged:(BOOL)isSending {
     //This is a good place to change BRSP mode
@@ -156,13 +171,45 @@
             NSLog(@"%@", error);
     }
 }
+
+- (NSString*)hexString:(NSData*) inData {
+    /* Returns hexadecimal string of NSData. Empty string if data is empty.   */
+    
+    const unsigned char *dataBuffer = (const unsigned char *)[inData bytes];
+    
+    if (!dataBuffer)
+        return [NSString string];
+    
+    NSUInteger          dataLength  = [inData length];
+    NSMutableString     *hexString  = [NSMutableString stringWithCapacity:(dataLength * 2)];
+    
+    for (int i = 0; i < dataLength; ++i)
+        [hexString appendString:[NSString stringWithFormat:@"%02lx", (unsigned long)dataBuffer[i]]];
+    
+    return [NSString stringWithString:hexString];
+}
+
+
 - (void)brspDataReceived:(Brsp*)brsp {
     NSLog(@"Data recieved");
+    NSData *unconvertedData = [brsp readBytes];
+    const unsigned char *dataBuffer = (const unsigned char *)[unconvertedData bytes];
+    
+    NSUInteger          dataLength  = [unconvertedData length];
+    NSMutableString     *hexString  = [NSMutableString stringWithCapacity:(dataLength * 2)];
+    
+    for (int i = 0; i < dataLength; ++i)
+        [hexString appendString:[NSString stringWithFormat:@"%02lx", (unsigned long)dataBuffer[i]]];
+    
+    
     //If there are items in the _commandQueue array, assume this data is part of a command response
     //The data incomming is in response to a sent command.
-    NSString *newData = [brsp readString];
+    
+    NSString *newData = [NSString stringWithString:hexString];
     CDVPluginResult *pluginResult = nil;
+
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:newData];
+    [pluginResult setKeepCallbackAsBool:TRUE];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:dataCallback];
 }
 - (void)brsp:(Brsp*)brsp ErrorReceived:(NSError*)error {

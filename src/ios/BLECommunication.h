@@ -16,11 +16,13 @@
 
 @interface BLECommunication : CDVPlugin <BrspDelegate, CBCentralManagerDelegate> {
     NSString* scanCallback;
+    NSString* connectionCallback;
     NSString* dataCallback;
 }
 
 @property (nonatomic, strong)CBCentralManager *cBCM;
 
+- (NSString*)hexString:(NSData*)inData;
 - (void)checkAvailability:(CDVInvokedUrlCommand *)command;
 - (void)scanDevices:(CDVInvokedUrlCommand *)command;
 
