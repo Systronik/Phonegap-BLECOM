@@ -36,7 +36,7 @@
     
     NSLog(@"checkAvailability");
     CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT messageAsString:@"BLE enabled"];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"BLE enabled"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
