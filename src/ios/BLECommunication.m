@@ -74,18 +74,25 @@
     
     NSString *arg1 = [command.arguments objectAtIndex:0];
     
-    //init the object with default buffer sizes of 1024 bytes
-    //    self.brspObject = [[Brsp alloc] initWithPeripheral:[AppDelegate app].activePeripheral];
-    //init with custom buffer sizes
     activePeripheral = nil;
-    for (NSUInteger i = 0; i < [peripherals count]; i++){
-        if ([[arg1 valueForKey:@"address"] containsString:[[peripherals objectAtIndex:i] name]]){
-            activePeripheral = [peripherals objectAtIndex:i];
-            i = [peripherals count];
-        }
+    NSString *index = [[arg1 valueForKey:@"address"] substringToIndex:2];
+    NSInteger convertedIndex = [index integerValue];
+    if (convertedIndex < [peripherals count]){
+        activePeripheral = [peripherals objectAtIndex:convertedIndex];
     }
     
+    //activePeripheral = nil;
+    //for (NSUInteger i = 0; i < [peripherals count]; i++){
+    //    if ([[arg1 valueForKey:@"address"] containsString:[[peripherals objectAtIndex:i] name]]){
+    //        activePeripheral = [peripherals objectAtIndex:i];
+    //        i = [peripherals count];
+    //    }
+    //}
+    
     if (activePeripheral){
+        //init the object with default buffer sizes of 1024 bytes
+        //    self.brspObject = [[Brsp alloc] initWithPeripheral:[AppDelegate app].activePeripheral];
+        //init with custom buffer sizes
         self.brspObject = [[Brsp alloc] initWithPeripheral:activePeripheral InputBufferSize:512 OutputBufferSize:512];
         //It is important to set this delegate before calling [Brsp open]
         self.brspObject.delegate = self;
@@ -243,8 +250,9 @@
         //    deviceFoundCallback.sendPluginResult(result);
         //    Log.d(TAG, "Device found: " + deviceInfo);
         //};
+        NSInteger actualIndex = [peripherals count] - 1;
         CDVPluginResult *pluginResult = nil;
-        NSString *deviceData = [NSString stringWithFormat:@"%@;%@",[peripheral name],[peripheral name]];            // Connect with device name, as address is not useable and visible to connect in iOS
+        NSString *deviceData = [NSString stringWithFormat:@"%02d:11:22:33:44:55;%@",actualIndex,[peripheral name]];            // Connect with device name, as address is not useable and visible to connect in iOS
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:deviceData];
         [pluginResult setKeepCallbackAsBool:TRUE];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:scanCallback];
