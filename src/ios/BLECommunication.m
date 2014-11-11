@@ -198,7 +198,7 @@
 
 
 - (void)brspDataReceived:(Brsp*)brsp {
-    NSLog(@"Data recieved");
+    NSLog(@"Data received");
     NSData *unconvertedData = [brsp readBytes];
     const unsigned char *dataBuffer = (const unsigned char *)[unconvertedData bytes];
     
