@@ -33,118 +33,126 @@
 #pragma mark - Cordova Plugin Methods
 
 - (void)checkAvailability:(CDVInvokedUrlCommand *)command {
-    
-    NSLog(@"checkAvailability");
-    CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"BLE enabled"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self.commandDelegate runInBackground:^{
+        NSLog(@"checkAvailability");
+        CDVPluginResult *pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"BLE enabled"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)scanDevices:(CDVInvokedUrlCommand*)command {
-    
-    NSLog(@"scanDevices");
-    CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
-    [pluginResult setKeepCallbackAsBool:TRUE];
-    scanCallback = [command.callbackId copy];
-    
-    [peripherals removeAllObjects];
-    
-    
-    [self.cBCM scanForPeripheralsWithServices:[NSArray arrayWithObject:[Brsp brspServiceUUID]] options:nil];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self.commandDelegate runInBackground:^{
+        NSLog(@"scanDevices");
+        CDVPluginResult *pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+        [pluginResult setKeepCallbackAsBool:TRUE];
+        scanCallback = [command.callbackId copy];
+        
+        [peripherals removeAllObjects];
+        
+        
+        [self.cBCM scanForPeripheralsWithServices:[NSArray arrayWithObject:[Brsp brspServiceUUID]] options:nil];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)stopScanDevices:(CDVInvokedUrlCommand*)command {
-    
-    NSLog(@"stopScanDevices");
-    
-    [self.cBCM stopScan];
-    
-    CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Scanning stopped"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    scanCallback = nil;
+    [self.commandDelegate runInBackground:^{
+        NSLog(@"stopScanDevices");
+        
+        [self.cBCM stopScan];
+        
+        CDVPluginResult *pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Scanning stopped"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        scanCallback = nil;
+    }];
 }
 
 - (void)connectDevice:(CDVInvokedUrlCommand*)command {
-    
-    NSLog(@"connectDevice");
-    CDVPluginResult *pluginResult = nil;
-    
-    NSString *arg1 = [command.arguments objectAtIndex:0];
-    
-    activePeripheral = nil;
-    NSString *index = [[arg1 valueForKey:@"address"] substringToIndex:2];
-    NSInteger convertedIndex = [index integerValue];
-    if (convertedIndex < [peripherals count]){
-        activePeripheral = [peripherals objectAtIndex:convertedIndex];
-    }
-    
-    //activePeripheral = nil;
-    //for (NSUInteger i = 0; i < [peripherals count]; i++){
-    //    if ([[arg1 valueForKey:@"address"] containsString:[[peripherals objectAtIndex:i] name]]){
-    //        activePeripheral = [peripherals objectAtIndex:i];
-    //        i = [peripherals count];
-    //    }
-    //}
-    
-    if (activePeripheral){
-        //init the object with default buffer sizes of 1024 bytes
-        //    self.brspObject = [[Brsp alloc] initWithPeripheral:[AppDelegate app].activePeripheral];
-        //init with custom buffer sizes
-        self.brspObject = [[Brsp alloc] initWithPeripheral:activePeripheral InputBufferSize:512 OutputBufferSize:512];
-        //It is important to set this delegate before calling [Brsp open]
-        self.brspObject.delegate = self;
-        //Use CBCentral Manager to connect this peripheral
-        [self.cBCM connectPeripheral:activePeripheral options:nil];
-        connectionCallback = [command.callbackId copy];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
-        [pluginResult setKeepCallbackAsBool:TRUE];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
-    }
-    else{
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
-    
+    [self.commandDelegate runInBackground:^{
+        NSLog(@"connectDevice");
+        CDVPluginResult *pluginResult = nil;
+        
+        NSString *arg1 = [command.arguments objectAtIndex:0];
+        
+        activePeripheral = nil;
+        NSString *index = [[arg1 valueForKey:@"address"] substringToIndex:2];
+        NSInteger convertedIndex = [index integerValue];
+        if (convertedIndex < [peripherals count]){
+            activePeripheral = [peripherals objectAtIndex:convertedIndex];
+        }
+        
+        //activePeripheral = nil;
+        //for (NSUInteger i = 0; i < [peripherals count]; i++){
+        //    if ([[arg1 valueForKey:@"address"] containsString:[[peripherals objectAtIndex:i] name]]){
+        //        activePeripheral = [peripherals objectAtIndex:i];
+        //        i = [peripherals count];
+        //    }
+        //}
+        
+        if (activePeripheral){
+            //init the object with default buffer sizes of 1024 bytes
+            //    self.brspObject = [[Brsp alloc] initWithPeripheral:[AppDelegate app].activePeripheral];
+            //init with custom buffer sizes
+            self.brspObject = [[Brsp alloc] initWithPeripheral:activePeripheral InputBufferSize:1024 OutputBufferSize:1024];
+            //It is important to set this delegate before calling [Brsp open]
+            self.brspObject.delegate = self;
+            //Use CBCentral Manager to connect this peripheral
+            [self.cBCM connectPeripheral:activePeripheral options:nil];
+            connectionCallback = [command.callbackId copy];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+            [pluginResult setKeepCallbackAsBool:TRUE];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
+        }
+        else{
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }
+    }];
 }
 
 - (void)disconnectDevice:(CDVInvokedUrlCommand*)command {
-    
-    NSLog(@"disconnectDevices");
-    CDVPluginResult *pluginResult = nil;
-    if (activePeripheral){
-        [self.brspObject close];
-        //Use CBCentralManager to close the connection to this peripheral
-        [self.cBCM cancelPeripheralConnection:activePeripheral];
-        activePeripheral = nil;
-        connectionCallback = [command.callbackId copy];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
-    }
-    else{
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-    }
-    [pluginResult setKeepCallbackAsBool:TRUE];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self.commandDelegate runInBackground:^{
+        NSLog(@"disconnectDevices");
+        CDVPluginResult *pluginResult = nil;
+        if (activePeripheral){
+            [self.brspObject close];
+            //Use CBCentralManager to close the connection to this peripheral
+            [self.cBCM cancelPeripheralConnection:activePeripheral];
+            activePeripheral = nil;
+            connectionCallback = [command.callbackId copy];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:connectionCallback];
+        }
+        else{
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        }
+        [pluginResult setKeepCallbackAsBool:TRUE];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)sendData:(CDVInvokedUrlCommand*)command {
-    
-    NSLog(@"sendData");
-    NSString *arg1 = [command.arguments objectAtIndex:0];
-    
-    NSString *data = [arg1 valueForKey:@"data"];
-    NSError *writeError = [self.brspObject writeString:data];
-    if (writeError){
-        NSLog(@"%@", writeError.description);
-    }
-    dataCallback = [command.callbackId copy];
-    CDVPluginResult *pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
-    [pluginResult setKeepCallbackAsBool:TRUE];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:dataCallback];
+    [self.commandDelegate runInBackground:^{
+        NSLog(@"sendData");
+        [self.brspObject flushOutputBuffer];
+        [self.brspObject flushInputBuffer];
+
+        NSString *arg1 = [command.arguments objectAtIndex:0];
+        
+        NSString *data = [arg1 valueForKey:@"data"];
+        NSError *writeError = [self.brspObject writeString:data];
+        if (writeError){
+            NSLog(@"%@", writeError.description);
+        }
+        dataCallback = [command.callbackId copy];
+        CDVPluginResult *pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+        [pluginResult setKeepCallbackAsBool:TRUE];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:dataCallback];
+    }];
 }
 
 #pragma mark BrspDelegate
